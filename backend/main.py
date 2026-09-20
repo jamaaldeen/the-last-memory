@@ -202,7 +202,7 @@ def create_video(request: VideoRequest):
             video_data = video_response.json()
         except Exception:
             video_data = video_response.text
-	print("LIVEPEER ANIMATION RESPONSE:", video_data, flush=True)
+        print("LIVEPEER ANIMATION RESPONSE:", video_data, flush=True)
 
         if not video_response.ok:
             return {
