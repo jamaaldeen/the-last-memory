@@ -19,6 +19,7 @@ app.add_middleware(
 
 DAYDREAM_API_KEY = os.getenv("DAYDREAM_API_KEY")
 AGENT_URL = "https://agent.livepeer.org/api/llm/chat"
+MCP_CREATIVE_URL = "https://agent.livepeer.org/api/mcp/creative"
 
 
 class MemoryRequest(BaseModel):
@@ -130,10 +131,9 @@ def create_video(request: VideoRequest):
     }
 
     try:
-
-        # STEP 1: Generate an image from the user's memory
+        # STEP 1 — Generate an image from the user's memory
         image_response = requests.post(
-            "https://agent.livepeer.org/api/mcp/creative",
+            MCP_CREATIVE_URL,
             headers=headers,
             json={
                 "jsonrpc": "2.0",
@@ -177,9 +177,9 @@ def create_video(request: VideoRequest):
                 "raw_response": image_data
             }
 
-        # STEP 2: Animate the generated image into a video
+        # STEP 2 — Animate the generated image into video
         video_response = requests.post(
-            "https://agent.livepeer.org/api/mcp/creative",
+            MCP_CREATIVE_URL,
             headers=headers,
             json={
                 "jsonrpc": "2.0",
@@ -210,19 +210,50 @@ def create_video(request: VideoRequest):
                 "message": str(video_data)
             }
 
-        video_structured = (
-            video_data
-            .get("result", {})
-            .get("structuredContent", {})
+        video_result = video_data.get("result", {})
+
+        video_structured = video_result.get(
+            "structuredContent",
+            {}
         )
 
         video_url = video_structured.get("url")
 
+        # Some MCP responses may return the media URL inside
+        # the content array instead of structuredContent.
+        if not video_url:
+            content = video_result.get("content", [])
+
+            if isinstance(content, list):
+                for item in content:
+                    if not isinstance(item, dict):
+                        continue
+
+                    possible_url = item.get("url")
+
+                    if possible_url:
+                        video_url = possible_url
+                        break
+
+                    text_value = item.get("text")
+
+                    if isinstance(text_value, str):
+                        if text_value.startswith("http"):
+                            video_url = text_value
+                            break
+
+        if not video_url:
+            return {
+                "success": False,
+                "message": "Livepeer generated the image but did not return a video URL.",
+                "image_url": image_url,
+                "animation_response": video_data
+            }
+
         return {
             "success": True,
             "image_url": image_url,
-            "video_url": video_url,
-            "result": video_data
+            "video_url": video_url
         }
 
     except Exception as e:
