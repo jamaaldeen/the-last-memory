@@ -11,12 +11,8 @@ app = FastAPI(title="The Last Memory")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-    	"http://127.0.0.1:3000",
-    	"https://the-last-memory-acgr8aot8-king-and-queen.vercel.app",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -64,6 +60,8 @@ Respond as the archive system.
 
 Be mysterious, cinematic, and concise.
 Do not explain that you are an AI.
+Do not use Markdown, asterisks, bullet points, headings, or special formatting.
+Return clean plain text only.
 """
             }
         ]
@@ -92,7 +90,6 @@ Do not explain that you are an AI.
                 "message": str(data),
             }
 
-        # Extract the assistant's text from the Livepeer response.
         analysis = None
 
         if isinstance(data, dict):
