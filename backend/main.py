@@ -25,6 +25,10 @@ class MemoryRequest(BaseModel):
     prompt: str
 
 
+class VideoRequest(BaseModel):
+    prompt: str
+
+
 @app.get("/")
 def root():
     return {"message": "The Last Memory backend is alive."}
@@ -108,4 +112,121 @@ Return clean plain text only.
         return {
             "success": False,
             "message": str(e),
+        }
+
+
+@app.post("/create-video")
+def create_video(request: VideoRequest):
+
+    if not request.prompt.strip():
+        return {
+            "success": False,
+            "message": "Please describe the memory you want to create."
+        }
+
+    headers = {
+        "Accept": "application/json, text/event-stream",
+        "Content-Type": "application/json",
+    }
+
+    try:
+
+        # STEP 1: Generate an image from the user's memory
+        image_response = requests.post(
+            "https://agent.livepeer.org/api/mcp/creative",
+            headers=headers,
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": "create_media",
+                    "arguments": {
+                        "action": "generate",
+                        "prompt": request.prompt
+                    }
+                }
+            },
+            timeout=120,
+        )
+
+        try:
+            image_data = image_response.json()
+        except Exception:
+            image_data = image_response.text
+
+        if not image_response.ok:
+            return {
+                "success": False,
+                "status_code": image_response.status_code,
+                "message": str(image_data)
+            }
+
+        structured = (
+            image_data
+            .get("result", {})
+            .get("structuredContent", {})
+        )
+
+        image_url = structured.get("url")
+
+        if not image_url:
+            return {
+                "success": False,
+                "message": "Livepeer did not return an image URL.",
+                "raw_response": image_data
+            }
+
+        # STEP 2: Animate the generated image into a video
+        video_response = requests.post(
+            "https://agent.livepeer.org/api/mcp/creative",
+            headers=headers,
+            json={
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": "create_media",
+                    "arguments": {
+                        "action": "animate",
+                        "source_url": image_url,
+                        "prompt": request.prompt,
+                        "duration": 5
+                    }
+                }
+            },
+            timeout=300,
+        )
+
+        try:
+            video_data = video_response.json()
+        except Exception:
+            video_data = video_response.text
+
+        if not video_response.ok:
+            return {
+                "success": False,
+                "status_code": video_response.status_code,
+                "message": str(video_data)
+            }
+
+        video_structured = (
+            video_data
+            .get("result", {})
+            .get("structuredContent", {})
+        )
+
+        video_url = video_structured.get("url")
+
+        return {
+            "success": True,
+            "image_url": image_url,
+            "video_url": video_url,
+            "result": video_data
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
         }

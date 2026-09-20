@@ -15,21 +15,30 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [reveal, setReveal] = useState(false);
 
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [creatorPrompt, setCreatorPrompt] = useState("");
+  const [creatingVideo, setCreatingVideo] = useState(false);
+  const [createdVideo, setCreatedVideo] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+
   async function analyzeMemory() {
     setLoading(true);
     setAnalysis(null);
 
     try {
-      const response = await fetch("https://the-last-memory-backend.onrender.com/generate-memory", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt:
-            "Analyze this memory from Mara's archive. The memory contains Mara and her daughter Emma during Emma's childhood. Look for inconsistencies, missing information, emotional anomalies, or signs that part of the memory may have been deliberately removed. Respond as the memory archive system. Be mysterious but concise. Do not use Markdown, asterisks, bullet points, headings, or special formatting. Return clean plain text only.",
-        }),
-      });
+      const response = await fetch(
+        "https://the-last-memory-backend.onrender.com/generate-memory",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt:
+              "Analyze this memory from Mara's archive. The memory contains Mara and her daughter Emma during Emma's childhood. Look for inconsistencies, missing information, emotional anomalies, or signs that part of the memory may have been deliberately removed. Respond as the memory archive system. Be mysterious but concise. Do not use Markdown, asterisks, bullet points, headings, or special formatting. Return clean plain text only.",
+          }),
+        }
+      );
 
       const data = await response.json();
       setAnalysis(data);
@@ -40,6 +49,46 @@ export default function Home() {
       });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function createNewMemory() {
+    if (!creatorPrompt.trim()) return;
+
+    setCreatingVideo(true);
+    setCreatedVideo(null);
+    setCreateError(null);
+
+    try {
+      const response = await fetch(
+        "https://the-last-memory-backend.onrender.com/create-video",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: creatorPrompt,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!data.success || !data.video_url) {
+        setCreateError(
+          data.message || "The Memory Archive could not create the video."
+        );
+        return;
+      }
+
+      setCreatedVideo(data.video_url);
+    } catch {
+      setCreateError(
+        "Unable to connect to the Memory Archive. Please try again."
+      );
+    } finally {
+      setCreatingVideo(false);
     }
   }
 
@@ -56,6 +105,14 @@ export default function Home() {
     setMemory(null);
     setAnalysis(null);
     setReveal(false);
+  }
+
+  function resetCreator() {
+    setCreatorOpen(false);
+    setCreatorPrompt("");
+    setCreatingVideo(false);
+    setCreatedVideo(null);
+    setCreateError(null);
   }
 
   if (reveal) {
@@ -292,6 +349,162 @@ export default function Home() {
     );
   }
 
+  if (creatorOpen) {
+    return (
+      <main className="min-h-screen bg-[#05070d] px-6 py-10 text-white">
+        <div className="mx-auto max-w-4xl">
+          <button
+            onClick={resetCreator}
+            className="text-sm text-gray-400 transition hover:text-white"
+          >
+            ← Return to Archive
+          </button>
+
+          <section className="mt-12">
+            <p className="text-xs uppercase tracking-[0.4em] text-blue-300">
+              Livepeer Agent // Memory Creator
+            </p>
+
+            <h1 className="mt-4 text-4xl font-light md:text-5xl">
+              Create Your Own Memory
+            </h1>
+
+            <p className="mt-5 max-w-2xl leading-7 text-gray-500">
+              Describe a memory, moment, dream, or scene. The Memory Archive
+              will transform your idea into a short cinematic video.
+            </p>
+
+            {!createdVideo && !creatingVideo && (
+              <>
+                <textarea
+                  value={creatorPrompt}
+                  onChange={(e) => setCreatorPrompt(e.target.value)}
+                  placeholder="Describe the memory you want to create..."
+                  rows={7}
+                  className="mt-10 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-gray-200 outline-none transition placeholder:text-gray-700 focus:border-blue-400/40"
+                />
+
+                <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-gray-600">
+                    5-second cinematic reconstruction
+                  </p>
+
+                  <button
+                    onClick={createNewMemory}
+                    disabled={!creatorPrompt.trim()}
+                    className="rounded-full border border-blue-400/40 bg-blue-500/10 px-8 py-4 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Generate Memory
+                  </button>
+                </div>
+              </>
+            )}
+
+            {creatingVideo && (
+              <div className="mt-10 rounded-2xl border border-blue-400/20 bg-blue-500/[0.04] p-8">
+                <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
+                  Livepeer Agent // Creating Memory
+                </p>
+
+                <div className="mt-7 space-y-4 font-mono text-xs">
+                  <p className="text-green-400">
+                    ● MEMORY IDEA RECEIVED
+                  </p>
+
+                  <p className="text-blue-300">
+                    ● GENERATING MEMORY VISUAL
+                  </p>
+
+                  <p className="text-blue-300">
+                    ● ANIMATING MEMORY
+                  </p>
+
+                  <p className="animate-pulse text-gray-400">
+                    ● AGENT PROCESSING...
+                  </p>
+                </div>
+
+                <p className="mt-7 text-sm leading-6 text-gray-600">
+                  This can take up to a minute while the Agent creates and
+                  animates the memory.
+                </p>
+              </div>
+            )}
+
+            {createError && (
+              <div className="mt-8 rounded-xl border border-red-400/20 bg-red-500/[0.04] p-5">
+                <p className="text-xs uppercase tracking-[0.3em] text-red-300">
+                  MEMORY CREATION FAILED
+                </p>
+
+                <p className="mt-3 text-sm leading-6 text-gray-400">
+                  {createError}
+                </p>
+
+                <button
+                  onClick={() => setCreateError(null)}
+                  className="mt-5 text-xs uppercase tracking-[0.2em] text-red-300 hover:text-red-200"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {createdVideo && (
+              <div className="mt-10">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
+                  <video
+                    className="w-full"
+                    src={createdVideo}
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-green-400/20 bg-green-500/[0.04] p-6">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.3em] text-green-300">
+                      Livepeer Agent // Memory Created
+                    </p>
+
+                    <span className="text-xs text-green-400">
+                      ● COMPLETE
+                    </span>
+                  </div>
+
+                  <p className="mt-4 leading-7 text-gray-400">
+                    Your memory has been reconstructed from your description
+                    and transformed into cinematic media.
+                  </p>
+                </div>
+
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    onClick={() => {
+                      setCreatedVideo(null);
+                      setCreatorPrompt("");
+                    }}
+                    className="rounded-full border border-blue-400/40 bg-blue-500/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/20"
+                  >
+                    Create Another
+                  </button>
+
+                  <button
+                    onClick={resetCreator}
+                    className="rounded-full border border-white/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-gray-400 transition hover:border-white/30 hover:text-white"
+                  >
+                    Return to Archive
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#05070d] px-6 py-10 text-white">
       <div className="mx-auto max-w-6xl">
@@ -388,6 +601,32 @@ export default function Home() {
             </button>
           </div>
 
+          <button
+            onClick={() => setCreatorOpen(true)}
+            className="mt-8 w-full rounded-2xl border border-blue-400/30 bg-blue-500/[0.06] p-7 text-left transition hover:border-blue-300/60 hover:bg-blue-500/[0.1]"
+          >
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-blue-300">
+                  Create With Livepeer Agent
+                </p>
+
+                <h2 className="mt-2 text-xl font-light">
+                  Create Your Own Memory
+                </h2>
+
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+                  Describe a moment from your imagination and transform it
+                  into a cinematic memory.
+                </p>
+              </div>
+
+              <span className="whitespace-nowrap rounded-full border border-blue-400/40 px-6 py-3 text-xs uppercase tracking-[0.2em] text-blue-200">
+                Create Memory →
+              </span>
+            </div>
+          </button>
+
           <div className="mt-12 rounded-xl border border-white/5 bg-white/[0.02] p-5">
             <div className="flex flex-col gap-3 text-xs md:flex-row md:items-center md:justify-between">
               <span className="uppercase tracking-[0.3em] text-gray-500">
@@ -400,8 +639,8 @@ export default function Home() {
             </div>
 
             <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">
-              Livepeer Agent analyzes recovered memory context and returns
-              an interpretation that becomes part of the interactive story.
+              Livepeer Agent analyzes recovered memory context and can
+              transform new user ideas into generated cinematic media.
             </p>
           </div>
         </section>
