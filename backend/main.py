@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 import requests
+import time
 
 load_dotenv()
 
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 DAYDREAM_API_KEY = os.getenv("DAYDREAM_API_KEY")
+
 AGENT_URL = "https://agent.livepeer.org/api/llm/chat"
 MCP_CREATIVE_URL = "https://agent.livepeer.org/api/mcp/creative"
 
@@ -131,7 +133,11 @@ def create_video(request: VideoRequest):
     }
 
     try:
-        # STEP 1 — Generate an image from the user's memory
+
+        # ---------------------------------------------------------
+        # STEP 1 — Generate image
+        # ---------------------------------------------------------
+
         image_response = requests.post(
             MCP_CREATIVE_URL,
             headers=headers,
@@ -162,13 +168,13 @@ def create_video(request: VideoRequest):
                 "message": str(image_data)
             }
 
-        structured = (
+        image_structured = (
             image_data
             .get("result", {})
             .get("structuredContent", {})
         )
 
-        image_url = structured.get("url")
+        image_url = image_structured.get("url")
 
         if not image_url:
             return {
@@ -177,7 +183,10 @@ def create_video(request: VideoRequest):
                 "raw_response": image_data
             }
 
-        # STEP 2 — Animate the generated image into video
+        # ---------------------------------------------------------
+        # STEP 2 — Start image-to-video job
+        # ---------------------------------------------------------
+
         video_response = requests.post(
             MCP_CREATIVE_URL,
             headers=headers,
@@ -195,14 +204,13 @@ def create_video(request: VideoRequest):
                     }
                 }
             },
-            timeout=300,
+            timeout=120,
         )
 
         try:
             video_data = video_response.json()
         except Exception:
             video_data = video_response.text
-        print("LIVEPEER ANIMATION RESPONSE:", video_data, flush=True)
 
         if not video_response.ok:
             return {
@@ -212,52 +220,122 @@ def create_video(request: VideoRequest):
             }
 
         video_result = video_data.get("result", {})
-
-        video_structured = video_result.get(
-            "structuredContent",
-            {}
-        )
+        video_structured = video_result.get("structuredContent", {})
 
         video_url = video_structured.get("url")
+        job_id = video_structured.get("job_id")
 
-        # Some MCP responses may return the media URL inside
-        # the content array instead of structuredContent.
-        if not video_url:
-            content = video_result.get("content", [])
+        # Some responses may return a finished URL immediately.
+        if video_url:
+            return {
+                "success": True,
+                "image_url": image_url,
+                "video_url": video_url
+            }
+
+        if not job_id:
+            return {
+                "success": False,
+                "message": "Livepeer did not return a video URL or job ID.",
+                "image_url": image_url,
+                "animation_response": video_data
+            }
+
+        # ---------------------------------------------------------
+        # STEP 3 — Poll asynchronous Livepeer job
+        # ---------------------------------------------------------
+
+        max_attempts = 24
+
+        for attempt in range(max_attempts):
+
+            time.sleep(8)
+
+            poll_response = requests.post(
+                MCP_CREATIVE_URL,
+                headers=headers,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 3,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "get_create_media",
+                        "arguments": {
+                            "job_id": job_id
+                        }
+                    }
+                },
+                timeout=60,
+            )
+
+            try:
+                poll_data = poll_response.json()
+            except Exception:
+                poll_data = poll_response.text
+
+            if not poll_response.ok:
+                continue
+
+            poll_result = poll_data.get("result", {})
+            poll_structured = poll_result.get(
+                "structuredContent",
+                {}
+            )
+
+            status = poll_structured.get("status")
+
+            # Look for the final media URL.
+            completed_url = poll_structured.get("url")
+
+            if completed_url:
+                return {
+                    "success": True,
+                    "image_url": image_url,
+                    "video_url": completed_url,
+                    "job_id": job_id
+                }
+
+            # Some versions may return the URL under result/content.
+            content = poll_result.get("content", [])
 
             if isinstance(content, list):
                 for item in content:
+
                     if not isinstance(item, dict):
                         continue
 
                     possible_url = item.get("url")
 
                     if possible_url:
-                        video_url = possible_url
-                        break
+                        return {
+                            "success": True,
+                            "image_url": image_url,
+                            "video_url": possible_url,
+                            "job_id": job_id
+                        }
 
-                    text_value = item.get("text")
+            if status == "failed":
+                return {
+                    "success": False,
+                    "message": "Livepeer video generation failed.",
+                    "image_url": image_url,
+                    "job_id": job_id,
+                    "poll_response": poll_data
+                }
 
-                    if isinstance(text_value, str):
-                        if text_value.startswith("http"):
-                            video_url = text_value
-                            break
-
-        if not video_url:
-            return {
-                "success": False,
-                "message": "Livepeer generated the image but did not return a video URL.",
-                "image_url": image_url,
-                "animation_response": video_data
-            }
+        # ---------------------------------------------------------
+        # STEP 4 — Timeout
+        # ---------------------------------------------------------
 
         return {
-            "success": True,
+            "success": False,
+            "message": "Livepeer video generation is still processing. Please try again shortly.",
             "image_url": image_url,
-            "video_url": video_url
+            "job_id": job_id
         }
 
     except Exception as e:
+
         return {
             "success": False,
             "message": str(e)
