@@ -13,7 +13,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
+    	"http://127.0.0.1:3000",
+    	"https://the-last-memory-acgr8aot8-king-and-queen.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
