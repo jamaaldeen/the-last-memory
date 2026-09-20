@@ -20,6 +20,7 @@ export default function Home() {
   const [creatingVideo, setCreatingVideo] = useState(false);
   const [createdVideo, setCreatedVideo] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [fragmentWarning, setFragmentWarning] = useState(false);
 
   async function analyzeMemory() {
     setLoading(true);
@@ -105,6 +106,7 @@ export default function Home() {
     setMemory(null);
     setAnalysis(null);
     setReveal(false);
+    setFragmentWarning(false);
   }
 
   function resetCreator() {
@@ -119,52 +121,80 @@ export default function Home() {
     return (
       <main className="min-h-screen bg-[#020308] px-6 text-white">
         <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center py-12">
-          <p className="text-center text-xs uppercase tracking-[0.5em] text-blue-300">
-            Memory Archive // Restricted Data
-          </p>
-
-          <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:p-12">
-            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
-              ARCHIVE RESPONSE
+          <div className="text-center">
+            <p className="text-xs uppercase tracking-[0.5em] text-blue-300">
+              Memory Archive // Restricted Data
             </p>
 
-            <div className="mt-8 space-y-7 text-lg leading-8">
-              <p>Mara: Who was she?</p>
+            <p className="mt-3 text-[10px] uppercase tracking-[0.35em] text-gray-700">
+              Unauthorized memory restoration detected
+            </p>
+          </div>
 
-              <p className="text-blue-200">
-                Archive: Your memory is incomplete.
-              </p>
+          <section className="mt-10 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] shadow-2xl shadow-blue-950/20">
+            <div className="border-b border-white/10 px-8 py-5 md:px-12">
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+                  Archive Response
+                </p>
 
-              <p>Mara: Why?</p>
-
-              <p className="text-blue-200">
-                Archive: Some memories were removed.
-              </p>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-red-300/70">
+                  Restricted
+                </span>
+              </div>
             </div>
 
-            <div className="my-10 h-px bg-white/10" />
+            <div className="px-8 py-8 md:px-12 md:py-10">
+              <div className="space-y-7 text-lg leading-8">
+                <p>
+                  <span className="text-gray-500">Mara:</span> Who was she?
+                </p>
 
-            <div className="rounded-xl border border-red-400/20 bg-red-500/[0.04] p-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-red-300">
-                MEMORY ACCESS RESTRICTED
-              </p>
+                <p className="text-blue-200">
+                  <span className="text-blue-300/50">Archive:</span> Your
+                  memory is incomplete.
+                </p>
 
-              <p className="mt-4 leading-7 text-gray-400">
-                The archive cannot restore what the user intentionally
-                instructed it to forget.
-              </p>
+                <p>
+                  <span className="text-gray-500">Mara:</span> Why?
+                </p>
 
-              <div className="mt-6 text-xs leading-6 text-gray-600">
-                MEMORY DESIGNATION: EMMA
-                <br />
-                STATUS: PARTIALLY DELETED
+                <p className="text-blue-200">
+                  <span className="text-blue-300/50">Archive:</span> Some
+                  memories were removed.
+                </p>
+              </div>
+
+              <div className="my-10 h-px bg-white/10" />
+
+              <div className="rounded-xl border border-red-400/20 bg-red-500/[0.035] p-6 md:p-7">
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-400" />
+
+                  <p className="text-xs uppercase tracking-[0.3em] text-red-300">
+                    Memory Access Restricted
+                  </p>
+                </div>
+
+                <p className="mt-5 max-w-2xl leading-7 text-gray-400">
+                  The archive cannot restore what the user intentionally
+                  instructed it to forget.
+                </p>
+
+                <div className="mt-7 border-t border-red-400/10 pt-5 font-mono text-[10px] leading-6 tracking-wider text-gray-600">
+                  MEMORY DESIGNATION: EMMA
+                  <br />
+                  STATUS: PARTIALLY DELETED
+                  <br />
+                  RESTORATION: USER-RESTRICTED
+                </div>
               </div>
             </div>
           </section>
 
           <button
             onClick={resetMemory}
-            className="mx-auto mt-8 rounded-full border border-white/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-gray-400 transition hover:border-white/30 hover:text-white"
+            className="mx-auto mt-8 rounded-full border border-white/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-gray-500 transition hover:border-white/30 hover:text-white"
           >
             Return to Archive
           </button>
@@ -175,16 +205,16 @@ export default function Home() {
 
   if (memory) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#030407] text-white">
         <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
           <button
             onClick={resetMemory}
-            className="mb-6 w-fit text-sm text-gray-400 hover:text-white"
+            className="mb-7 w-fit text-sm text-gray-500 transition hover:text-white"
           >
             ← Return to Archive
           </button>
 
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl shadow-black">
             <video
               className="w-full"
               src={memory}
@@ -200,31 +230,32 @@ export default function Home() {
                 Memory Reconstruction
               </p>
 
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="h-2 w-2 rounded-full bg-green-400" />
-                Powered by Livepeer Agent
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                Livepeer Agent Active
               </div>
             </div>
 
-            <h1 className="mt-3 text-3xl font-light">
+            <h1 className="mt-4 text-3xl font-light md:text-4xl">
               Something feels familiar.
             </h1>
 
-            <p className="mt-4 max-w-2xl leading-7 text-gray-400">
-              Explore the recovered memory. The archive has detected
-              inconsistencies within the reconstruction.
+            <p className="mt-4 max-w-2xl leading-7 text-gray-500">
+              The archive reconstructed this fragment from Mara&apos;s
+              recovered memories. Something inside the reconstruction does
+              not belong.
             </p>
 
             <button
               onClick={analyzeMemory}
               disabled={loading}
-              className="mt-8 rounded-full border border-blue-400/40 bg-blue-500/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-8 rounded-full border border-blue-400/40 bg-blue-500/[0.08] px-7 py-3 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/[0.15] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Analyzing Memory..." : "Analyze Memory"}
             </button>
 
             {loading && (
-              <div className="mt-8 rounded-2xl border border-blue-400/20 bg-blue-500/[0.04] p-6">
+              <div className="mt-8 overflow-hidden rounded-2xl border border-blue-400/20 bg-blue-500/[0.035] p-6">
                 <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
                   Livepeer Agent // Processing
                 </p>
@@ -247,7 +278,7 @@ export default function Home() {
 
             {analysis && (
               <>
-                <div className="mt-8 rounded-2xl border border-blue-400/20 bg-blue-500/[0.05] p-6">
+                <div className="mt-8 rounded-2xl border border-blue-400/20 bg-blue-500/[0.04] p-6 md:p-7">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
                       Livepeer Agent // Memory Analysis
@@ -268,8 +299,8 @@ export default function Home() {
                   </div>
 
                   {analysis.success && (
-                    <div className="mt-6 border-t border-white/10 pt-5">
-                      <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                    <div className="mt-7 border-t border-white/10 pt-5">
+                      <p className="text-xs uppercase tracking-[0.3em] text-gray-600">
                         Agent Activity
                       </p>
 
@@ -284,8 +315,8 @@ export default function Home() {
                           ANALYSIS COMPLETE
                         </div>
 
-                        <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                          <span className="text-green-400">●</span>{" "}
+                        <div className="rounded-lg border border-red-400/20 bg-red-500/[0.03] p-3">
+                          <span className="text-red-400">●</span>{" "}
                           ANOMALY DETECTED
                         </div>
                       </div>
@@ -296,7 +327,7 @@ export default function Home() {
                 {analysis.success && (
                   <button
                     onClick={() => setReveal(true)}
-                    className="mt-6 rounded-full border border-red-400/40 bg-red-500/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-red-200 transition hover:border-red-300 hover:bg-red-500/20"
+                    className="mt-6 rounded-full border border-red-400/40 bg-red-500/[0.08] px-7 py-3 text-sm uppercase tracking-[0.2em] text-red-200 transition hover:border-red-300 hover:bg-red-500/[0.15]"
                   >
                     Ask the Archive: Who Was She?
                   </button>
@@ -311,13 +342,23 @@ export default function Home() {
 
   if (!entered) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#05070d] px-6 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(90,120,255,0.16),transparent_45%)]" />
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#03050a] px-6 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(70,100,255,0.15),transparent_38%)]" />
+
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/[0.04]" />
+
+        <div className="absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-400/[0.025]" />
 
         <section className="relative z-10 max-w-3xl text-center">
-          <p className="mb-6 text-xs uppercase tracking-[0.5em] text-blue-300">
-            Memory Archive // System Online
-          </p>
+          <div className="mb-8 flex items-center justify-center gap-3">
+            <span className="h-px w-10 bg-blue-400/30" />
+
+            <p className="text-[10px] uppercase tracking-[0.5em] text-blue-300">
+              Memory Archive // System Online
+            </p>
+
+            <span className="h-px w-10 bg-blue-400/30" />
+          </div>
 
           <h1 className="text-6xl font-light tracking-tight md:text-8xl">
             The Last Memory
@@ -329,18 +370,19 @@ export default function Home() {
           </p>
 
           <p className="mx-auto mt-5 max-w-lg text-sm leading-6 text-gray-600">
-            Explore Mara&apos;s recovered memories. Discover what the archive
-            has forgotten.
+            Explore Mara&apos;s recovered memories.
+            <br />
+            Discover what the archive has forgotten.
           </p>
 
           <button
             onClick={() => setEntered(true)}
-            className="mt-12 rounded-full border border-blue-400/40 bg-blue-500/10 px-8 py-4 text-sm uppercase tracking-[0.25em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/20"
+            className="mt-12 rounded-full border border-blue-400/40 bg-blue-500/[0.08] px-8 py-4 text-sm uppercase tracking-[0.25em] text-blue-200 shadow-lg shadow-blue-950/20 transition hover:border-blue-300 hover:bg-blue-500/[0.15]"
           >
             Enter Memory Archive
           </button>
 
-          <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-600">
+          <div className="mt-9 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.25em] text-gray-700">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
             Livepeer Agent Connected
           </div>
@@ -355,56 +397,79 @@ export default function Home() {
         <div className="mx-auto max-w-4xl">
           <button
             onClick={resetCreator}
-            className="text-sm text-gray-400 transition hover:text-white"
+            className="text-sm text-gray-500 transition hover:text-white"
           >
             ← Return to Archive
           </button>
 
           <section className="mt-12">
-            <p className="text-xs uppercase tracking-[0.4em] text-blue-300">
-              Livepeer Agent // Memory Creator
-            </p>
+            <div className="flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-blue-400" />
 
-            <h1 className="mt-4 text-4xl font-light md:text-5xl">
+              <p className="text-xs uppercase tracking-[0.4em] text-blue-300">
+                Livepeer Agent // Memory Creator
+              </p>
+            </div>
+
+            <h1 className="mt-5 text-4xl font-light md:text-5xl">
               Create Your Own Memory
             </h1>
 
             <p className="mt-5 max-w-2xl leading-7 text-gray-500">
-              Describe a memory, moment, dream, or scene. The Memory Archive
-              will transform your idea into a short cinematic video.
+              Give the archive a moment from your imagination. It will
+              generate the visual memory and animate it into a short
+              cinematic reconstruction.
             </p>
 
             {!createdVideo && !creatingVideo && (
               <>
-                <textarea
-                  value={creatorPrompt}
-                  onChange={(e) => setCreatorPrompt(e.target.value)}
-                  placeholder="Describe the memory you want to create..."
-                  rows={7}
-                  className="mt-10 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-gray-200 outline-none transition placeholder:text-gray-700 focus:border-blue-400/40"
-                />
+                <div className="mt-10 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025]">
+                  <div className="border-b border-white/10 px-5 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-gray-600">
+                      Memory Input
+                    </p>
+                  </div>
+
+                  <textarea
+                    value={creatorPrompt}
+                    onChange={(e) => setCreatorPrompt(e.target.value)}
+                    placeholder="Describe the memory you want to create..."
+                    rows={7}
+                    className="w-full resize-none bg-transparent p-6 text-gray-200 outline-none placeholder:text-gray-700"
+                  />
+                </div>
 
                 <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-gray-600">
-                    5-second cinematic reconstruction
-                  </p>
+                  <div>
+                    <p className="text-xs text-gray-600">
+                      5-second cinematic reconstruction
+                    </p>
+
+                    <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-700">
+                      Generated by Livepeer Agent
+                    </p>
+                  </div>
 
                   <button
                     onClick={createNewMemory}
                     disabled={!creatorPrompt.trim()}
-                    className="rounded-full border border-blue-400/40 bg-blue-500/10 px-8 py-4 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-full border border-blue-400/40 bg-blue-500/[0.08] px-8 py-4 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/[0.15] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Generate Memory
+                    Generate Memory →
                   </button>
                 </div>
               </>
             )}
 
             {creatingVideo && (
-              <div className="mt-10 rounded-2xl border border-blue-400/20 bg-blue-500/[0.04] p-8">
-                <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
-                  Livepeer Agent // Creating Memory
-                </p>
+              <div className="mt-10 rounded-2xl border border-blue-400/20 bg-blue-500/[0.035] p-8">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs uppercase tracking-[0.3em] text-blue-300">
+                    Livepeer Agent // Creating Memory
+                  </p>
+
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-blue-400" />
+                </div>
 
                 <div className="mt-7 space-y-4 font-mono text-xs">
                   <p className="text-green-400">
@@ -425,8 +490,8 @@ export default function Home() {
                 </div>
 
                 <p className="mt-7 text-sm leading-6 text-gray-600">
-                  This can take up to a minute while the Agent creates and
-                  animates the memory.
+                  The Agent is creating and animating your memory. This can
+                  take up to a minute.
                 </p>
               </div>
             )}
@@ -434,7 +499,7 @@ export default function Home() {
             {createError && (
               <div className="mt-8 rounded-xl border border-red-400/20 bg-red-500/[0.04] p-5">
                 <p className="text-xs uppercase tracking-[0.3em] text-red-300">
-                  MEMORY CREATION FAILED
+                  Memory Creation Failed
                 </p>
 
                 <p className="mt-3 text-sm leading-6 text-gray-400">
@@ -452,7 +517,7 @@ export default function Home() {
 
             {createdVideo && (
               <div className="mt-10">
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
                   <video
                     className="w-full"
                     src={createdVideo}
@@ -462,8 +527,8 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-green-400/20 bg-green-500/[0.04] p-6">
-                  <div className="flex items-center justify-between">
+                <div className="mt-6 rounded-2xl border border-green-400/20 bg-green-500/[0.035] p-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs uppercase tracking-[0.3em] text-green-300">
                       Livepeer Agent // Memory Created
                     </p>
@@ -474,8 +539,8 @@ export default function Home() {
                   </div>
 
                   <p className="mt-4 leading-7 text-gray-400">
-                    Your memory has been reconstructed from your description
-                    and transformed into cinematic media.
+                    Your idea has been reconstructed into cinematic media by
+                    the Memory Archive.
                   </p>
                 </div>
 
@@ -485,14 +550,14 @@ export default function Home() {
                       setCreatedVideo(null);
                       setCreatorPrompt("");
                     }}
-                    className="rounded-full border border-blue-400/40 bg-blue-500/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/20"
+                    className="rounded-full border border-blue-400/40 bg-blue-500/[0.08] px-7 py-3 text-sm uppercase tracking-[0.2em] text-blue-200 transition hover:border-blue-300 hover:bg-blue-500/[0.15]"
                   >
                     Create Another
                   </button>
 
                   <button
                     onClick={resetCreator}
-                    className="rounded-full border border-white/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-gray-400 transition hover:border-white/30 hover:text-white"
+                    className="rounded-full border border-white/10 px-7 py-3 text-sm uppercase tracking-[0.2em] text-gray-500 transition hover:border-white/30 hover:text-white"
                   >
                     Return to Archive
                   </button>
@@ -520,13 +585,17 @@ export default function Home() {
           </div>
 
           <div className="text-right">
-            <p className="text-xs text-gray-500">SYSTEM STATUS</p>
-
-            <p className="mt-1 text-sm text-green-400">
-              ONLINE
+            <p className="text-[10px] uppercase tracking-[0.25em] text-gray-600">
+              System Status
             </p>
 
-            <p className="mt-1 text-[10px] uppercase tracking-widest text-gray-600">
+            <div className="mt-1 flex items-center justify-end gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+
+              <p className="text-sm text-green-400">ONLINE</p>
+            </div>
+
+            <p className="mt-1 text-[9px] uppercase tracking-widest text-gray-700">
               Livepeer Agent Connected
             </p>
           </div>
@@ -534,84 +603,157 @@ export default function Home() {
 
         <section className="py-16">
           <div className="max-w-2xl">
-            <p className="text-sm text-gray-500">
-              AVAILABLE MEMORIES
+            <p className="text-[10px] uppercase tracking-[0.4em] text-gray-600">
+              Available Memories
             </p>
 
-            <h2 className="mt-3 text-3xl font-light">
+            <h2 className="mt-4 text-3xl font-light md:text-4xl">
               What remains of the past?
             </h2>
 
             <p className="mt-4 leading-7 text-gray-500">
               Select a memory fragment to begin reconstruction. The archive
-              will analyze the recovered material for anomalies.
+              will analyze recovered material for anomalies and missing data.
             </p>
           </div>
 
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             <button
               onClick={() => setMemory("/videos/scene-1.mp4")}
-              className="group rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-blue-400/50 hover:bg-blue-500/[0.06]"
+              className="group overflow-hidden rounded-2xl border border-blue-400/20 bg-blue-500/[0.025] text-left transition hover:-translate-y-1 hover:border-blue-400/50 hover:bg-blue-500/[0.06]"
             >
-              <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-blue-950 to-black">
-                <span className="text-4xl opacity-60">◈</span>
+              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-blue-950/80 via-blue-950/20 to-black">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(100,130,255,0.18),transparent_55%)]" />
+
+                <span className="relative text-4xl text-blue-200/50 transition group-hover:text-blue-200/80">
+                  ◈
+                </span>
+
+                <span className="absolute left-4 top-4 text-[9px] uppercase tracking-[0.25em] text-blue-300/50">
+                  FRAGMENT 001
+                </span>
               </div>
 
-              <h2 className="mt-5 text-lg">
-                The Archive
-              </h2>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg">The Archive</h2>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Memory fragment // Entry
-              </p>
+                  <span className="text-xs text-green-400">STABLE</span>
+                </div>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  Memory fragment // Entry
+                </p>
+
+                <p className="mt-5 text-xs uppercase tracking-[0.2em] text-blue-300 opacity-0 transition group-hover:opacity-100">
+                  Reconstruct →
+                </p>
+              </div>
             </button>
 
             <button
               onClick={() => setMemory("/videos/scene-2.mp4")}
-              className="group rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-blue-400/50 hover:bg-blue-500/[0.06]"
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] text-left transition hover:-translate-y-1 hover:border-blue-400/50 hover:bg-blue-500/[0.06]"
             >
-              <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-amber-950/60 to-black">
-                <span className="text-4xl opacity-60">◈</span>
+              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-amber-950/60 via-amber-950/10 to-black">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,190,100,0.12),transparent_55%)]" />
+
+                <span className="relative text-4xl text-amber-100/40 transition group-hover:text-amber-100/70">
+                  ◈
+                </span>
+
+                <span className="absolute left-4 top-4 text-[9px] uppercase tracking-[0.25em] text-amber-200/40">
+                  FRAGMENT 002
+                </span>
               </div>
 
-              <h2 className="mt-5 text-lg">
-                Emma — Childhood
-              </h2>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg">Emma — Childhood</h2>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Memory fragment // Age 8
-              </p>
+                  <span className="text-xs text-green-400">STABLE</span>
+                </div>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  Memory fragment // Age 8
+                </p>
+
+                <p className="mt-5 text-xs uppercase tracking-[0.2em] text-blue-300 opacity-0 transition group-hover:opacity-100">
+                  Reconstruct →
+                </p>
+              </div>
             </button>
 
             <button
-              onClick={() => alert("Memory integrity compromised.")}
-              className="group rounded-2xl border border-red-400/20 bg-red-500/[0.03] p-6 text-left transition hover:border-red-400/50"
+              onClick={() => setFragmentWarning(true)}
+              className="group overflow-hidden rounded-2xl border border-red-400/15 bg-red-500/[0.025] text-left transition hover:-translate-y-1 hover:border-red-400/40"
             >
-              <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-red-950/40 to-black">
-                <span className="text-4xl opacity-60">?</span>
+              <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-red-950/40 via-red-950/10 to-black">
+                <span className="relative text-4xl text-red-200/40 transition group-hover:text-red-200/70">
+                  ?
+                </span>
+
+                <span className="absolute left-4 top-4 text-[9px] uppercase tracking-[0.25em] text-red-300/40">
+                  FRAGMENT 003
+                </span>
               </div>
 
-              <h2 className="mt-5 text-lg">
-                Unknown Fragment
-              </h2>
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg">Unknown Fragment</h2>
 
-              <p className="mt-2 text-sm text-red-300/60">
-                Memory integrity compromised
-              </p>
+                  <span className="text-xs text-red-400">CORRUPTED</span>
+                </div>
+
+                <p className="mt-2 text-sm text-red-300/50">
+                  Memory integrity compromised
+                </p>
+
+                <p className="mt-5 text-xs uppercase tracking-[0.2em] text-red-300 opacity-0 transition group-hover:opacity-100">
+                  Inspect →
+                </p>
+              </div>
             </button>
           </div>
 
+          {fragmentWarning && (
+            <div className="mt-6 rounded-xl border border-red-400/20 bg-red-500/[0.035] p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-red-300">
+                    Archive Warning
+                  </p>
+
+                  <p className="mt-2 text-sm text-gray-500">
+                    Memory integrity compromised. Reconstruction unavailable.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setFragmentWarning(false)}
+                  className="w-fit text-xs uppercase tracking-[0.2em] text-gray-600 hover:text-white"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={() => setCreatorOpen(true)}
-            className="mt-8 w-full rounded-2xl border border-blue-400/30 bg-blue-500/[0.06] p-7 text-left transition hover:border-blue-300/60 hover:bg-blue-500/[0.1]"
+            className="group mt-8 w-full rounded-2xl border border-blue-400/25 bg-gradient-to-r from-blue-500/[0.07] to-transparent p-7 text-left transition hover:border-blue-300/50 hover:bg-blue-500/[0.1]"
           >
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-blue-300">
-                  Create With Livepeer Agent
-                </p>
+                <div className="flex items-center gap-3">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
 
-                <h2 className="mt-2 text-xl font-light">
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-blue-300">
+                    Create With Livepeer Agent
+                  </p>
+                </div>
+
+                <h2 className="mt-3 text-xl font-light">
                   Create Your Own Memory
                 </h2>
 
@@ -621,7 +763,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <span className="whitespace-nowrap rounded-full border border-blue-400/40 px-6 py-3 text-xs uppercase tracking-[0.2em] text-blue-200">
+              <span className="whitespace-nowrap rounded-full border border-blue-400/40 px-6 py-3 text-xs uppercase tracking-[0.2em] text-blue-200 transition group-hover:border-blue-300">
                 Create Memory →
               </span>
             </div>
@@ -629,7 +771,7 @@ export default function Home() {
 
           <div className="mt-12 rounded-xl border border-white/5 bg-white/[0.02] p-5">
             <div className="flex flex-col gap-3 text-xs md:flex-row md:items-center md:justify-between">
-              <span className="uppercase tracking-[0.3em] text-gray-500">
+              <span className="uppercase tracking-[0.3em] text-gray-600">
                 Media Intelligence Layer
               </span>
 
@@ -639,8 +781,8 @@ export default function Home() {
             </div>
 
             <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600">
-              Livepeer Agent analyzes recovered memory context and can
-              transform new user ideas into generated cinematic media.
+              Livepeer Agent analyzes recovered memory context and transforms
+              new user ideas into generated cinematic media.
             </p>
           </div>
         </section>
