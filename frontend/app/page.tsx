@@ -20,7 +20,7 @@ export default function Home() {
     setAnalysis(null);
 
     try {
-      const response = await fetch("http://the-last-memory-backend.onrender.com/generate-memory", {
+      const response = await fetch("https://the-last-memory-backend.onrender.com/generate-memory", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
