@@ -168,13 +168,64 @@ def create_video(request: VideoRequest):
                 "message": str(image_data)
             }
 
-        image_structured = (
-            image_data
-            .get("result", {})
-            .get("structuredContent", {})
+        # ---------------------------------------------------------
+        # Extract image URL from Livepeer response
+        # ---------------------------------------------------------
+
+        image_result = image_data.get("result", {})
+
+        image_structured = image_result.get(
+            "structuredContent",
+            {}
         )
 
-        image_url = image_structured.get("url")
+        print("LIVEPEER IMAGE RESPONSE:")
+        print(image_data)
+
+        image_url = None
+
+        if isinstance(image_structured, dict):
+            image_url = image_structured.get("url")
+
+        # Check MCP content if structuredContent did not contain URL.
+        if not image_url:
+
+            content = image_result.get("content", [])
+
+            if isinstance(content, list):
+
+                for item in content:
+
+                    if not isinstance(item, dict):
+                        continue
+
+                    # Direct URL
+                    if item.get("url"):
+                        image_url = item.get("url")
+
+                    # MCP image content
+                    if item.get("type") == "image":
+                        image_url = (
+                            item.get("url")
+                            or item.get("data")
+                        )
+
+                    # MCP resource content
+                    if item.get("type") == "resource":
+
+                        resource = item.get(
+                            "resource",
+                            {}
+                        )
+
+                        if isinstance(resource, dict):
+                            image_url = (
+                                resource.get("uri")
+                                or resource.get("url")
+                            )
+
+                    if image_url:
+                        break
 
         if not image_url:
             return {
@@ -220,10 +271,17 @@ def create_video(request: VideoRequest):
             }
 
         video_result = video_data.get("result", {})
-        video_structured = video_result.get("structuredContent", {})
+        video_structured = video_result.get(
+            "structuredContent",
+            {}
+        )
 
-        video_url = video_structured.get("url")
-        job_id = video_structured.get("job_id")
+        video_url = None
+        job_id = None
+
+        if isinstance(video_structured, dict):
+            video_url = video_structured.get("url")
+            job_id = video_structured.get("job_id")
 
         # Some responses may return a finished URL immediately.
         if video_url:
@@ -277,15 +335,18 @@ def create_video(request: VideoRequest):
                 continue
 
             poll_result = poll_data.get("result", {})
+
             poll_structured = poll_result.get(
                 "structuredContent",
                 {}
             )
 
-            status = poll_structured.get("status")
+            status = None
+            completed_url = None
 
-            # Look for the final media URL.
-            completed_url = poll_structured.get("url")
+            if isinstance(poll_structured, dict):
+                status = poll_structured.get("status")
+                completed_url = poll_structured.get("url")
 
             if completed_url:
                 return {
@@ -295,10 +356,11 @@ def create_video(request: VideoRequest):
                     "job_id": job_id
                 }
 
-            # Some versions may return the URL under result/content.
+            # Check content for final URL.
             content = poll_result.get("content", [])
 
             if isinstance(content, list):
+
                 for item in content:
 
                     if not isinstance(item, dict):
